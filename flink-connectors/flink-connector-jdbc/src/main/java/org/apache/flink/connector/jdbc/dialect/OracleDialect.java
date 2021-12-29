@@ -47,7 +47,7 @@ public class OracleDialect extends AbstractDialect {
 
     @Override
     public String quoteIdentifier(String identifier) {
-        return "`" + identifier + "`";
+        return identifier;
     }
 
     /** Oracle upsert query use Merge INTO ... */
