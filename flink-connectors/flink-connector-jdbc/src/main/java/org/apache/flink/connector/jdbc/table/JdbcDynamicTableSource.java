@@ -118,7 +118,7 @@ public class JdbcDynamicTableSource
                             + " BETWEEN ? AND ?";
         }
         if (limit >= 0) {
-            if (dialect.dialectName() == "Oracle") {
+            if ("Oracle".equalsIgnoreCase(dialect.dialectName())) {
                 query =
                         String.format(
                                 "SELECT * FROM (%s) WHERE %s",
