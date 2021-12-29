@@ -50,10 +50,7 @@ public class OracleDialect extends AbstractDialect {
         return "`" + identifier + "`";
     }
 
-    /**
-     * Oracle upsert query use Merge INTO ...
-     *
-     */
+    /** Oracle upsert query use Merge INTO ... */
     @Override
     public Optional<String> getUpsertStatement(
             String tableName, String[] fieldNames, String[] uniqueKeyFields) {
