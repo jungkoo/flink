@@ -66,11 +66,16 @@ public class OracleDialect extends AbstractDialect {
                         .map(f -> String.format("%s = :%s", quoteIdentifier(f), f))
                         .collect(Collectors.joining(", "));
         return Optional.of(
-                "MERGE INTO " + quoteIdentifier(tableName)
-                        + " USING dual ON (" + onKey + ")"
+                "MERGE INTO "
+                        + quoteIdentifier(tableName)
+                        + " USING dual ON ("
+                        + onKey
+                        + ")"
                         + " WHEN MATCHED THEN "
-                        + " UPDATE SET " + updateSetClause
-                        + " WHEN NOT MATCHED THEN " + getInsertIntoStatement(tableName, fieldNames));
+                        + " UPDATE SET "
+                        + updateSetClause
+                        + " WHEN NOT MATCHED THEN "
+                        + getInsertIntoStatement(tableName, fieldNames));
     }
 
     @Override
@@ -114,5 +119,4 @@ public class OracleDialect extends AbstractDialect {
                 LogicalTypeRoot.SYMBOL,
                 LogicalTypeRoot.UNRESOLVED);
     }
-
 }
