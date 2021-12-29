@@ -121,8 +121,8 @@ public class JdbcDynamicTableSource
             if (dialect.dialectName() == "Oracle") {
                 query =
                         String.format(
-                                "SELECT * FROM (%s) WHERE %s"
-                                , query, dialect.getLimitClause(limit));
+                                "SELECT * FROM (%s) WHERE %s",
+                                query, dialect.getLimitClause(limit));
             } else {
                 query = String.format("%s %s", query, dialect.getLimitClause(limit));
             }
