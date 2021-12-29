@@ -59,11 +59,9 @@ public class OracleDialect extends AbstractDialect {
             String tableName, String[] fieldNames, String[] uniqueKeyFields) {
         final String onKey = Arrays.stream(uniqueKeyFields).map(f -> f + " = :" + f)
                 .collect(Collectors.joining(" ,"));
-
         final String updateSetClause = Arrays.stream(fieldNames)
                 .map(f -> String.format("%s = :%s", quoteIdentifier(f), f))
                 .collect(Collectors.joining(", "));
-
         return Optional.of(
                 "MERGE INTO " + quoteIdentifier(tableName)
                         + " USING dual ON (" + onKey + ")"
