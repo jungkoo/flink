@@ -6,8 +6,10 @@ import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /** JDBC dialect for Oracle. */
@@ -57,11 +59,7 @@ public class OracleDialect extends AbstractDialect {
         final String onKey =
                 Arrays.stream(uniqueKeyFields)
                         .map(f -> f + " = :" + f)
-                        .collect(Collectors.joining(" ,"));
-        final String updateSetClause =
-                Arrays.stream(fieldNames)
-                        .map(f -> String.format("%s = :%s", quoteIdentifier(f), f))
-                        .collect(Collectors.joining(", "));
+                        .collect(Collectors.joining(" AND "));
         return Optional.of(
                 "MERGE INTO "
                         + quoteIdentifier(tableName)
@@ -69,10 +67,38 @@ public class OracleDialect extends AbstractDialect {
                         + onKey
                         + ")"
                         + " WHEN MATCHED THEN "
-                        + " UPDATE SET "
-                        + updateSetClause
+                        + whenMatchThenUpdateClause(fieldNames, uniqueKeyFields)
                         + " WHEN NOT MATCHED THEN "
-                        + getInsertIntoStatement(tableName, fieldNames));
+                        + whenNotMatchedThenInsertClause(fieldNames));
+    }
+
+    private String whenMatchThenUpdateClause(String[] fieldNames, String[] uniqueKeyFields) {
+        final Set<String> keyField = new HashSet(Arrays.asList(uniqueKeyFields));
+        final String updateSetClause =
+                Arrays.stream(fieldNames)
+                        .filter(f -> !keyField.contains(f))
+                        .map(f -> String.format("%s = :%s", quoteIdentifier(f), f))
+                        .collect(Collectors.joining(", "));
+
+        return "UPDATE SET " + updateSetClause;
+    }
+
+    private String whenNotMatchedThenInsertClause(String[] fieldNames) {
+        final String columns =
+                Arrays.stream(fieldNames)
+                        .map(this::quoteIdentifier)
+                        .collect(Collectors.joining(", "));
+        final String placeholders =
+                Arrays.stream(fieldNames)
+                        .map(f -> ":" + f)
+                        .collect(Collectors.joining(", "));
+        return "INSERT "
+                + "("
+                + columns
+                + ")"
+                + " VALUES ("
+                + placeholders
+                +")";
     }
 
     @Override
