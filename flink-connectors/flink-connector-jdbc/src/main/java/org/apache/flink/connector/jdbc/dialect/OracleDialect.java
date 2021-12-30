@@ -89,16 +89,8 @@ public class OracleDialect extends AbstractDialect {
                         .map(this::quoteIdentifier)
                         .collect(Collectors.joining(", "));
         final String placeholders =
-                Arrays.stream(fieldNames)
-                        .map(f -> ":" + f)
-                        .collect(Collectors.joining(", "));
-        return "INSERT "
-                + "("
-                + columns
-                + ")"
-                + " VALUES ("
-                + placeholders
-                + ")";
+                Arrays.stream(fieldNames).map(f -> ":" + f).collect(Collectors.joining(", "));
+        return "INSERT " + "(" + columns + ")" + " VALUES (" + placeholders + ")";
     }
 
     @Override
