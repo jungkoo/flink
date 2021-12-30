@@ -98,7 +98,7 @@ public class OracleDialect extends AbstractDialect {
                 + ")"
                 + " VALUES ("
                 + placeholders
-                +")";
+                + ")";
     }
 
     @Override
