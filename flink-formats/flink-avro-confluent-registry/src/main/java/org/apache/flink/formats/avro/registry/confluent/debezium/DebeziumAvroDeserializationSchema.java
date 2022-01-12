@@ -157,18 +157,28 @@ public final class DebeziumAvroDeserializationSchema implements DeserializationS
     }
 
     private String convertOp(GenericRowData row, GenericRowData before, GenericRowData after) {
+        Object op;
         try {
-            return row.getField(2).toString();
+            op = row.getField(2);
+        } catch (ArrayIndexOutOfBoundsException e) {
+            op = null;
         } catch (Exception e) {
-            if (before != null && after != null) {
-                return OP_UPDATE;
-            }
-            if (before != null && after == null) {
-                return OP_DELETE;
-            }
-            if (before == null && after != null) {
-                return OP_CREATE;
-            }
+            throw new IllegalStateException("Invalid field value. (row=" + row + ")");
+        }
+
+        if (op != null) {
+            // debezium format
+            return op.toString();
+        }
+        // changeFeed format
+        if (before != null && after != null) {
+            return OP_UPDATE;
+        }
+        if (before != null && after == null) {
+            return OP_DELETE;
+        }
+        if (before == null && after != null) {
+            return OP_CREATE;
         }
         throw new IllegalStateException("Invalid field value. (before=null, after=null");
     }
