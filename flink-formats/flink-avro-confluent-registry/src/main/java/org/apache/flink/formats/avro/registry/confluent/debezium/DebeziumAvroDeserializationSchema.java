@@ -120,11 +120,16 @@ public final class DebeziumAvroDeserializationSchema implements DeserializationS
             // skip tombstone messages
             return;
         }
+        GenericRowData row = null;
+        GenericRowData before = null;
+        GenericRowData after = null;
+        String op = null;
+
         try {
-            GenericRowData row = (GenericRowData) avroDeserializer.deserialize(message);
-            GenericRowData before = (GenericRowData) row.getField(0);
-            GenericRowData after = (GenericRowData) row.getField(1);
-            String op = convertOp(row, before, after);
+            row = (GenericRowData) avroDeserializer.deserialize(message);
+            before = (GenericRowData) row.getField(0);
+            after = (GenericRowData) row.getField(1);
+            op = convertOp(row, before, after);
             if (OP_CREATE.equals(op) || OP_READ.equals(op)) {
                 after.setRowKind(RowKind.INSERT);
                 out.collect(after);
@@ -151,8 +156,11 @@ public final class DebeziumAvroDeserializationSchema implements DeserializationS
                                 op, new String(message)));
             }
         } catch (Throwable t) {
-            // a big try catch to protect the processing.
-            throw new IOException("Can't deserialize Debezium Avro message.", t);
+            throw new IOException(
+                    format(
+                            "Can't deserialize Debezium Avro message. (row: %s, before: %s, after: %s, op: %s)",
+                            row, before, after, op),
+                    t);
         }
     }
 
