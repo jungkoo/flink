@@ -287,6 +287,7 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
     public static final String PG_CHARACTER_VARYING_ARRAY = "_varchar";
     public static final String PG_JSONB = "jsonb";
     public static final String PG_JSON = "json";
+    public static final String PG_UUID = "uuid";
 
     /**
      * Converts Postgres type to Flink {@link DataType}.
@@ -356,6 +357,7 @@ public class PostgresCatalog extends AbstractJdbcCatalog {
             case PG_TEXT:
             case PG_JSON:
             case PG_JSONB:
+            case PG_UUID:
                 return DataTypes.STRING();
             case PG_TEXT_ARRAY:
                 return DataTypes.ARRAY(DataTypes.STRING());
