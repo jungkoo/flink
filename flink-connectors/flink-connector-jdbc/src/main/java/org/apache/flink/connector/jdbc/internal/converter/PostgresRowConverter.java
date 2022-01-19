@@ -18,12 +18,9 @@
 
 package org.apache.flink.connector.jdbc.internal.converter;
 
-import org.apache.flink.table.data.DecimalData;
 import org.apache.flink.table.data.GenericArrayData;
 import org.apache.flink.table.data.StringData;
-import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
-import org.apache.flink.table.types.logical.DecimalType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
@@ -35,13 +32,6 @@ import org.postgresql.jdbc.PgArray;
 import org.postgresql.util.PGobject;
 
 import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.sql.Date;
-import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
@@ -140,11 +130,12 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
             return null;
         }
         if (String.class.isInstance(obj)) {
-            return (String)obj;
+            return (String) obj;
         }
         if (java.util.UUID.class.isInstance(obj)) {
             return obj.toString();
         }
-        throw new UnsupportedOperationException("[VARCHAR] Doesn't support class type : " + obj.getClass());
+        throw new UnsupportedOperationException(
+                "[VARCHAR] Doesn't support class type : " + obj.getClass());
     }
 }
