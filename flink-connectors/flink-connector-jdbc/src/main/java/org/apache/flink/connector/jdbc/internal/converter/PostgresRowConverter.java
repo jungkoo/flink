@@ -20,6 +20,7 @@ package org.apache.flink.connector.jdbc.internal.converter;
 
 import org.apache.flink.table.data.GenericArrayData;
 import org.apache.flink.table.data.StringData;
+import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
@@ -32,6 +33,9 @@ import org.postgresql.jdbc.PgArray;
 import org.postgresql.util.PGobject;
 
 import java.lang.reflect.Array;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
@@ -119,8 +123,18 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
     private JdbcDeserializationConverter createPrimitiveConverter(LogicalType type) {
         try {
             switch (type.getTypeRoot()) {
+                case NULL:
+                    return val -> null;
                 case VARCHAR:
-                    return val -> StringData.fromString(convertToString(val));
+                    return val ->
+                            val instanceof String
+                                    ? StringData.fromString((String)val)
+                                    : StringData.fromString(String.valueOf(val));
+                case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                    return val ->
+                            val instanceof LocalDateTime
+                                    ? TimestampData.fromLocalDateTime((LocalDateTime) val)
+                                    : TimestampData.fromTimestamp((Timestamp) val);
                 default:
                     return super.createInternalConverter(type);
             }
@@ -128,19 +142,5 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
             throw new UnsupportedOperationException(
                     "Unsupported type:" + type + ", type.getTypeRoot():" + type.getTypeRoot());
         }
-    }
-
-    private static String convertToString(Object obj) {
-        if (obj == null) {
-            return null;
-        }
-        if (String.class.isInstance(obj)) {
-            return (String) obj;
-        }
-        if (java.util.UUID.class.isInstance(obj)) {
-            return obj.toString();
-        }
-        throw new UnsupportedOperationException(
-                "[VARCHAR] Doesn't support class type : " + obj.getClass());
     }
 }
