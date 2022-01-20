@@ -22,11 +22,11 @@ import org.apache.flink.table.data.GenericArrayData;
 import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 
@@ -71,7 +71,7 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
         try {
             switch (type.getTypeRoot()) {
                 case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-                    final int timestampPrecision = ((TimestampType) type).getPrecision();
+                    final int timestampPrecision = ((LocalZonedTimestampType) type).getPrecision();
                     return (val, index, statement) ->
                             statement.setTimestamp(
                                     index,
