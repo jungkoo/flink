@@ -26,7 +26,7 @@ import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.table.types.logical.ZonedTimestampType;
+import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 
@@ -68,13 +68,10 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
 
     @Override
     public JdbcSerializationConverter createExternalConverter(LogicalType type) {
-        LogicalTypeRoot root = type.getTypeRoot();
         try {
-            switch (root) {
+            switch (type.getTypeRoot()) {
                 case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-                    final ZonedTimestampType ztp =
-                            type instanceof ZonedTimestampType ? (ZonedTimestampType) type : null;
-                    final int timestampPrecision = ztp.getPrecision();
+                    final int timestampPrecision = ((TimestampType) type).getPrecision();
                     return (val, index, statement) ->
                             statement.setTimestamp(
                                     index,
@@ -82,9 +79,14 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
                 default:
                     return super.createExternalConverter(type);
             }
-        } catch (UnsupportedOperationException e) {
+        } catch (Exception e) {
             throw new UnsupportedOperationException(
-                    "Unsupported type:" + type + ", type.getTypeRoot():" + type.getTypeRoot());
+                    "Unsupported type:"
+                            + type
+                            + ", type.getTypeRoot():"
+                            + type.getTypeRoot()
+                            + ", classType:"
+                            + type.getClass());
         }
     }
 
