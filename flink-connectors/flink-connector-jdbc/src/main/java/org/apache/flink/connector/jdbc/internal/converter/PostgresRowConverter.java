@@ -117,11 +117,16 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
     // Have its own method so that Postgres can support primitives that super class doesn't support
     // in the future
     private JdbcDeserializationConverter createPrimitiveConverter(LogicalType type) {
-        switch (type.getTypeRoot()) {
-            case VARCHAR:
-                return val -> StringData.fromString(convertToString(val));
-            default:
-                return super.createInternalConverter(type);
+        try {
+            switch (type.getTypeRoot()) {
+                case VARCHAR:
+                    return val -> StringData.fromString(convertToString(val));
+                default:
+                    return super.createInternalConverter(type);
+            }
+        } catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException(
+                    "Unsupported type:" + type + ", type.getTypeRoot():" + type.getTypeRoot());
         }
     }
 
