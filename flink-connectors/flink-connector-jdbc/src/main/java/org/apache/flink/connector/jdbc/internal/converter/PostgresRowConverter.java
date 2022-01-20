@@ -33,7 +33,6 @@ import org.postgresql.jdbc.PgArray;
 import org.postgresql.util.PGobject;
 
 import java.lang.reflect.Array;
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -128,7 +127,7 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
                 case VARCHAR:
                     return val ->
                             val instanceof String
-                                    ? StringData.fromString((String)val)
+                                    ? StringData.fromString((String) val)
                                     : StringData.fromString(String.valueOf(val));
                 case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
                     return val ->
