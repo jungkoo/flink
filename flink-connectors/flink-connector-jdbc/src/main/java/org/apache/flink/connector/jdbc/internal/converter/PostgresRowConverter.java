@@ -22,11 +22,11 @@ import org.apache.flink.table.data.GenericArrayData;
 import org.apache.flink.table.data.StringData;
 import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
 import org.apache.flink.table.types.logical.RowType;
-import org.apache.flink.table.types.logical.TimestampType;
 import org.apache.flink.table.types.logical.utils.LogicalTypeChecks;
 import org.apache.flink.table.types.logical.utils.LogicalTypeUtils;
 
@@ -37,6 +37,7 @@ import java.lang.reflect.Array;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
@@ -72,16 +73,11 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
         try {
             switch (type.getTypeRoot()) {
                 case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-                    final int timestampPrecision = ((TimestampType) type).getPrecision();
+                    final int timestampPrecision = ((LocalZonedTimestampType) type).getPrecision();
                     return (val, index, statement) ->
                             statement.setTimestamp(
                                     index,
-                                    new Timestamp(
-                                            val.getTimestamp(index, timestampPrecision)
-                                                    .toLocalDateTime()
-                                                    .atZone(ZoneId.systemDefault())
-                                                    .toInstant()
-                                                    .toEpochMilli()));
+                                    val.getTimestamp(index, timestampPrecision).toTimestamp());
                 default:
                     return super.createExternalConverter(type);
             }
@@ -161,10 +157,18 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
                                     ? StringData.fromString((String) val)
                                     : StringData.fromString(String.valueOf(val));
                 case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
-                    return val ->
-                            val instanceof LocalDateTime
-                                    ? TimestampData.fromLocalDateTime((LocalDateTime) val)
-                                    : TimestampData.fromTimestamp((Timestamp) val);
+                    return val -> {
+                        if (val instanceof LocalDateTime) {
+                            final LocalDateTime localDateTime = (LocalDateTime) val;
+                            final ZoneId zoneId = ZoneId.systemDefault();
+                            final ZoneOffset zoneOffset =
+                                    zoneId.getRules().getOffset(localDateTime);
+                            return TimestampData.fromEpochMillis(
+                                    localDateTime.toInstant(zoneOffset).getEpochSecond());
+                        } else {
+                            return TimestampData.fromTimestamp((Timestamp) val);
+                        }
+                    };
                 default:
                     return super.createInternalConverter(type);
             }
