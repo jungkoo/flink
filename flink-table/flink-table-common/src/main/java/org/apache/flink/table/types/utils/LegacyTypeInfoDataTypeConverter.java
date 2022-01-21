@@ -237,7 +237,7 @@ public final class LegacyTypeInfoDataTypeConverter {
         // Unsupported conversion from data type 'TIMESTAMP_LTZ(6) NOT NULL' fix
         else if (hasRoot(logicalType, LogicalTypeRoot.TIMESTAMP_WITH_LOCAL_TIME_ZONE)
                 && dataType.getConversionClass() == Instant.class) {
-            return Types.SQL_TIMESTAMP;
+            return Types.LOCAL_DATE_TIME;
         }
 
         // relax the precision constraint as LocalTime can store the highest precision
