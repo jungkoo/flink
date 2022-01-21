@@ -36,7 +36,7 @@ import org.postgresql.util.PGobject;
 import java.lang.reflect.Array;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
@@ -79,7 +79,8 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
                                     new Timestamp(
                                             val.getTimestamp(index, timestampPrecision)
                                                     .toLocalDateTime()
-                                                    .toInstant(ZoneOffset.UTC)
+                                                    .atZone(ZoneId.systemDefault())
+                                                    .toInstant()
                                                     .toEpochMilli()));
                 default:
                     return super.createExternalConverter(type);
