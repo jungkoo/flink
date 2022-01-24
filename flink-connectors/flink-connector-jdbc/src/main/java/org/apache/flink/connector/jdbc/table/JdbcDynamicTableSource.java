@@ -20,6 +20,7 @@ package org.apache.flink.connector.jdbc.table;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.jdbc.dialect.JdbcDialect;
+import org.apache.flink.connector.jdbc.dialect.oracle.OracleDialect;
 import org.apache.flink.connector.jdbc.internal.options.JdbcConnectorOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcLookupOptions;
 import org.apache.flink.connector.jdbc.internal.options.JdbcReadOptions;
@@ -120,7 +121,14 @@ public class JdbcDynamicTableSource
                             + " BETWEEN ? AND ?";
         }
         if (limit >= 0) {
-            query = String.format("%s %s", query, dialect.getLimitClause(limit));
+            if (dialect instanceof OracleDialect) {
+                query =
+                        String.format(
+                                "SELECT * FROM (%s) WHERE %s",
+                                query, dialect.getLimitClause(limit));
+            } else {
+                query = String.format("%s %s", query, dialect.getLimitClause(limit));
+            }
         }
         builder.setQuery(query);
         final RowType rowType = (RowType) physicalRowDataType.getLogicalType();
