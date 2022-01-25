@@ -118,7 +118,14 @@ public class JdbcDynamicTableSource
                             + " BETWEEN ? AND ?";
         }
         if (limit >= 0) {
-            query = String.format("%s %s", query, dialect.getLimitClause(limit));
+            if ("Oracle".equalsIgnoreCase(dialect.dialectName())) {
+                query =
+                        String.format(
+                                "SELECT * FROM (%s) WHERE %s",
+                                query, dialect.getLimitClause(limit));
+            } else {
+                query = String.format("%s %s", query, dialect.getLimitClause(limit));
+            }
         }
         builder.setQuery(query);
         final RowType rowType = (RowType) physicalSchema.toRowDataType().getLogicalType();
