@@ -19,7 +19,10 @@
 package org.apache.flink.connector.jdbc.internal.converter;
 
 import org.apache.flink.table.data.GenericArrayData;
+import org.apache.flink.table.data.StringData;
+import org.apache.flink.table.data.TimestampData;
 import org.apache.flink.table.types.logical.ArrayType;
+import org.apache.flink.table.types.logical.LocalZonedTimestampType;
 import org.apache.flink.table.types.logical.LogicalType;
 import org.apache.flink.table.types.logical.LogicalTypeFamily;
 import org.apache.flink.table.types.logical.LogicalTypeRoot;
@@ -31,6 +34,8 @@ import org.postgresql.jdbc.PgArray;
 import org.postgresql.util.PGobject;
 
 import java.lang.reflect.Array;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * Runtime converter that responsible to convert between JDBC object and Flink internal object for
@@ -58,6 +63,30 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
             return createPostgresArrayConverter(arrayType);
         } else {
             return createPrimitiveConverter(type);
+        }
+    }
+
+    @Override
+    public JdbcSerializationConverter createExternalConverter(LogicalType type) {
+        try {
+            switch (type.getTypeRoot()) {
+                case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                    final int timestampPrecision = ((LocalZonedTimestampType) type).getPrecision();
+                    return (val, index, statement) ->
+                            statement.setTimestamp(
+                                    index,
+                                    val.getTimestamp(index, timestampPrecision).toTimestamp());
+                default:
+                    return super.createExternalConverter(type);
+            }
+        } catch (Exception e) {
+            throw new UnsupportedOperationException(
+                    "Unsupported type:"
+                            + type
+                            + ", type.getTypeRoot():"
+                            + type.getTypeRoot()
+                            + ", classType:"
+                            + type.getClass());
         }
     }
 
@@ -116,6 +145,26 @@ public class PostgresRowConverter extends AbstractJdbcRowConverter {
     // Have its own method so that Postgres can support primitives that super class doesn't support
     // in the future
     private JdbcDeserializationConverter createPrimitiveConverter(LogicalType type) {
-        return super.createInternalConverter(type);
+        try {
+            switch (type.getTypeRoot()) {
+                case NULL:
+                    return val -> null;
+                case VARCHAR:
+                    return val ->
+                            val instanceof String
+                                    ? StringData.fromString((String) val)
+                                    : StringData.fromString(String.valueOf(val));
+                case TIMESTAMP_WITH_LOCAL_TIME_ZONE:
+                    return val ->
+                            val instanceof LocalDateTime
+                                    ? TimestampData.fromLocalDateTime((LocalDateTime) val)
+                                    : TimestampData.fromTimestamp((Timestamp) val);
+                default:
+                    return super.createInternalConverter(type);
+            }
+        } catch (UnsupportedOperationException e) {
+            throw new UnsupportedOperationException(
+                    "Unsupported type:" + type + ", type.getTypeRoot():" + type.getTypeRoot());
+        }
     }
 }
